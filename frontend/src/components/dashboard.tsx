@@ -1,8 +1,7 @@
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import {
   Mail,
   Clock,
-  Cpu,
   Upload,
   Copy,
   ExternalLink,
@@ -12,9 +11,13 @@ import {
   Link as LinkIcon,
   ListOrdered,
   List,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ChevronDown,
+  ChevronUp,
+  FileText,
 } from "lucide-react"
-import { Sidebar } from "@/components/sidebar"
+import { MainLayout } from "@/components/main-layout"
+import { useSettings } from "@/components/providers/settings-provider"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CircularProgress } from "@/components/ui/circular-progress"
@@ -34,13 +37,20 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate, sharedHistory = [], onHistoryUpdate }: DashboardProps) {
+  const { minutesPerEmail } = useSettings()
   const [emailContent, setEmailContent] = useState("")
   const [emailSubject, setEmailSubject] = useState("")
   const [isDragging, setIsDragging] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [showOriginalEmail, setShowOriginalEmail] = useState(false)
   const [classificationResult, setClassificationResult] = useState<EmailClassificationResponse | null>(null)
   const [smartReply, setSmartReply] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
   const [localHistory, setLocalHistory] = useState<Array<EmailClassificationResponse & { subject?: string }>>([])
+
+  useEffect(() => {
+    setShowOriginalEmail(false)
+  }, [classificationResult?.processed_at])
 
   const history = sharedHistory.length > 0 ? sharedHistory : localHistory
 
@@ -161,86 +171,62 @@ export function Dashboard({ onNavigate, sharedHistory = [], onHistoryUpdate }: D
       itemDate.setHours(0, 0, 0, 0)
       return itemDate.getTime() === today.getTime()
     }).length
-    const timeSavedMinutes = emailsToday * 2
+    const timeSavedMinutes = emailsToday * minutesPerEmail
     const timeSavedHours = Math.floor(timeSavedMinutes / 60)
     const timeSavedMins = timeSavedMinutes % 60
     const timeSavedFormatted = timeSavedHours > 0
       ? `${timeSavedHours}h ${timeSavedMins}m`
       : `${timeSavedMinutes}m`
-    const avgConfidence = history.length > 0
-      ? Math.round(
-        (history.reduce((sum, item) => sum + item.confidence, 0) / history.length) * 100
-      )
-      : 94
     return {
       emailsToday,
       timeSaved: timeSavedFormatted,
-      accuracy: avgConfidence,
     }
-  }, [history])
+  }, [history, minutesPerEmail])
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar activeItem="dashboard" onNavigate={onNavigate} />
-      <main className="flex-1 ml-64 overflow-y-auto bg-background relative">
-        <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-background/95 pointer-events-none -z-10" />
-        <div className="container mx-auto p-6 space-y-6 relative z-0">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                <Mail className="h-4 w-4 text-muted-foreground" />
+    <MainLayout activeItem="dashboard" onNavigate={onNavigate!}>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground truncate min-w-0">Dashboard</h1>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+          <Mail className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+        <Card className="bg-card/60 backdrop-blur-md border-border/30 shadow-lg min-w-0 overflow-hidden">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-muted-foreground mb-1 truncate">
+                  Emails Processados Hoje
+                </p>
+                <p className="text-2xl md:text-3xl font-bold text-foreground">{metrics.emailsToday}</p>
+              </div>
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+                <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-card/60 backdrop-blur-md border-border/30 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">
-                      Emails Processados Hoje
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">{metrics.emailsToday}</p>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
-                    <Mail className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/60 backdrop-blur-md border-border/30 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">
-                      Tempo Estimado Economizado
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">{metrics.timeSaved}</p>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted/80 backdrop-blur-sm">
-                    <Clock className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card/60 backdrop-blur-md border-border/30 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">
-                      Precisão da IA
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">{metrics.accuracy}%</p>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
-                    <Cpu className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          </CardContent>
+        </Card>
+        <Card className="bg-card/60 backdrop-blur-md border-border/30 shadow-lg min-w-0 overflow-hidden">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-muted-foreground mb-1 truncate">
+                  Tempo Estimado Economizado
+                </p>
+                <p className="text-xs text-muted-foreground mb-0.5">
+                  Estimativa: {minutesPerEmail} min por email
+                </p>
+                <p className="text-2xl md:text-3xl font-bold text-foreground">{metrics.timeSaved}</p>
+              </div>
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-lg bg-muted/80 backdrop-blur-sm">
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>Entrada de Email</CardTitle>
@@ -251,7 +237,7 @@ export function Dashboard({ onNavigate, sharedHistory = [], onHistoryUpdate }: D
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   className={cn(
-                    "rounded-lg border-2 border-dashed p-8 text-center transition-colors cursor-pointer relative",
+                    "rounded-lg border-2 border-dashed p-6 sm:p-8 text-center transition-colors cursor-pointer relative min-h-[140px] flex items-center justify-center",
                     isDragging
                       ? "border-primary bg-primary/5"
                       : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
@@ -263,21 +249,21 @@ export function Dashboard({ onNavigate, sharedHistory = [], onHistoryUpdate }: D
                     onChange={handleFileInput}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
-                  <div className="flex flex-col items-center gap-3">
+                  <div className="flex flex-col items-center gap-2 sm:gap-3">
                     <div className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-full transition-colors",
+                      "flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full transition-colors shrink-0",
                       isDragging ? "bg-primary/10" : "bg-muted"
                     )}>
                       <Upload className={cn(
-                        "h-6 w-6 transition-colors",
+                        "h-5 w-5 sm:h-6 sm:w-6 transition-colors",
                         isDragging ? "text-primary" : "text-muted-foreground"
                       )} />
                     </div>
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-medium text-foreground text-center">
                       Arraste o conteúdo do email
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      ou clique para selecionar arquivo (.txt ou .pdf)
+                    <p className="text-xs text-muted-foreground text-center">
+                      ou clique para selecionar (.txt ou .pdf)
                     </p>
                   </div>
                 </div>
@@ -337,10 +323,10 @@ export function Dashboard({ onNavigate, sharedHistory = [], onHistoryUpdate }: D
                 ) : classificationResult ? (
                   <>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between min-w-0">
                         <Badge
                           variant={classificationResult.category === "Produtivo" ? "productive" : "unproductive"}
-                          className="text-sm px-3 py-1"
+                          className="text-xs sm:text-sm px-2 sm:px-3 py-1 min-w-0 max-w-full truncate"
                         >
                           {classificationResult.category === "Produtivo"
                             ? "Produtivo - Ação Necessária"
@@ -348,15 +334,53 @@ export function Dashboard({ onNavigate, sharedHistory = [], onHistoryUpdate }: D
                         </Badge>
                       </div>
                       <div className="flex flex-col items-center gap-2">
-                        <p className="text-sm font-medium text-muted-foreground">Score de Confiança</p>
-                        <CircularProgress value={confidencePercentage} size={120} strokeWidth={8} />
+                        <p className="text-sm font-medium text-muted-foreground text-center">
+                          Confiança desta análise
+                        </p>
+                        <p className="text-xs text-muted-foreground text-center max-w-xs">
+                          O quanto a IA confia nesta classificação (0–100%)
+                        </p>
+                        <CircularProgress value={confidencePercentage} size={100} strokeWidth={8} />
+                      </div>
+                      <div className="rounded-lg border border-border bg-muted/30 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setShowOriginalEmail((v) => !v)}
+                          className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            E-mail classificado
+                          </span>
+                          {showOriginalEmail ? (
+                            <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          )}
+                        </button>
+                        {showOriginalEmail && (
+                          <div className="border-t border-border px-3 py-3 space-y-2 max-h-48 overflow-y-auto">
+                            {emailSubject && (
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground mb-0.5">Assunto</p>
+                                <p className="text-sm text-foreground">{emailSubject}</p>
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground mb-0.5">Conteúdo</p>
+                              <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+                                {classificationResult.original_content}
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <h4 className="text-sm font-semibold text-foreground">
                         Editor de Resposta Inteligente
                       </h4>
-                      <div className="flex items-center gap-1 rounded-t-lg border border-b-0 bg-muted/50 p-2">
+                      <div className="flex flex-wrap items-center gap-1 rounded-t-lg border border-b-0 bg-muted/50 p-2">
                         <button
                           type="button"
                           className="flex h-8 w-8 items-center justify-center rounded hover:bg-accent"
@@ -415,23 +439,23 @@ export function Dashboard({ onNavigate, sharedHistory = [], onHistoryUpdate }: D
                         placeholder="A resposta sugerida aparecerá aqui..."
                       />
                     </div>
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2">
                       <Button
                         variant="outline"
                         onClick={handleCopyResponse}
-                        className="flex-1"
+                        className="flex-1 min-w-0"
                         disabled={!smartReply}
                       >
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copiar Resposta
+                        <Copy className="mr-2 h-4 w-4 shrink-0" />
+                        <span className="truncate">Copiar Resposta</span>
                       </Button>
                       <Button
                         onClick={handleOpenInGmail}
-                        className="flex-1"
+                        className="flex-1 min-w-0"
                         disabled={!smartReply}
                       >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Abrir no Gmail
+                        <ExternalLink className="mr-2 h-4 w-4 shrink-0" />
+                        <span className="truncate">Abrir no Gmail</span>
                       </Button>
                     </div>
                   </>
@@ -443,9 +467,7 @@ export function Dashboard({ onNavigate, sharedHistory = [], onHistoryUpdate }: D
               </CardContent>
             </Card>
           </div>
-          <ClassificationHistory history={history} limit={3} />
-        </div>
-      </main>
-    </div>
+      <ClassificationHistory history={history} limit={3} />
+    </MainLayout>
   )
 }

@@ -23,7 +23,10 @@ class AIService:
                     json={
                         "inputs": text,
                         "parameters": {
-                            "candidate_labels": ["email produtivo que requer ação", "email improdutivo sem necessidade de ação"]
+                            "candidate_labels": [
+                                "email que exige ação ou resposta do destinatário agora: pergunta, solicitação, pedido de documento ou informação",
+                                "email apenas de cortesia: cumprimentos, agradecimento ou votos sem nenhuma solicitação ou pergunta, ex.: Feliz Natal, obrigado, parabéns"
+                            ]
                         }
                     }
                 )
@@ -32,9 +35,9 @@ class AIService:
                     labels = result.get("labels", [])
                     scores = result.get("scores", [])
                     if labels and scores:
-                        top_label = labels[0]
+                        top_label = labels[0].lower()
                         top_score = scores[0]
-                        category = "Produtivo" if "produtivo" in top_label.lower() else "Improdutivo"
+                        category = "Improdutivo" if "cortesia" in top_label or "apenas" in top_label else "Produtivo"
                         return {"category": category, "confidence": top_score}
                 return self._fallback_classification(text)
         except Exception:
@@ -49,9 +52,11 @@ class AIService:
             "relatório", "análise", "verificar", "confirmar", "aprovar"
         ]
         unproductive_keywords = [
-            "feliz natal", "feliz ano novo", "parabéns", "aniversário",
+            "feliz natal", "boas festas", "feliz ano novo", "parabéns", "aniversário",
             "obrigado", "agradecimento", "bom dia", "boa tarde", "boa noite",
-            "felicitações", "votos", "abraços", "saudações", "happy", "merry"
+            "felicitações", "votos", "abraços", "saudações", "happy", "merry",
+            "apenas para desejar", "passando para desejar", "passando para agradecer",
+            "só para agradecer", "só para desejar", "apenas para agradecer"
         ]
         productive_count = sum(1 for kw in productive_keywords if kw in text_lower)
         unproductive_count = sum(1 for kw in unproductive_keywords if kw in text_lower)
