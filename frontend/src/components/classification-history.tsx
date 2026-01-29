@@ -2,6 +2,7 @@ import { EmailClassificationResponse } from "@/types"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatDate } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 
 interface ClassificationHistoryProps {
   history: Array<EmailClassificationResponse & { subject?: string }>
@@ -13,7 +14,7 @@ export function ClassificationHistory({ history, limit }: ClassificationHistoryP
 
   if (history.length === 0) {
     return (
-      <Card>
+      <Card className="min-w-0 overflow-hidden">
         <CardHeader>
           <CardTitle>Histórico de Classificações</CardTitle>
         </CardHeader>
@@ -27,7 +28,7 @@ export function ClassificationHistory({ history, limit }: ClassificationHistoryP
   }
 
   return (
-    <Card>
+    <Card className="min-w-0 overflow-hidden">
       <CardHeader>
         <CardTitle>Histórico de Classificações</CardTitle>
         {limit && history.length > limit && (
@@ -37,22 +38,15 @@ export function ClassificationHistory({ history, limit }: ClassificationHistoryP
         )}
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        {/* Tabela - desktop */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                  Data
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                  Assunto
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                  Classificação
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                  Confiança
-                </th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Data</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Assunto</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Classificação</th>
+                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Confiança</th>
               </tr>
             </thead>
             <tbody>
@@ -87,6 +81,39 @@ export function ClassificationHistory({ history, limit }: ClassificationHistoryP
               })}
             </tbody>
           </table>
+        </div>
+        {/* Cards - mobile */}
+        <div className="md:hidden space-y-3">
+          {displayHistory.map((item, index) => {
+            const confidence = Math.round(item.confidence * 100)
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "rounded-lg border border-border p-3 space-y-1.5",
+                  "hover:bg-muted/50 transition-colors"
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {formatDate(item.processed_at)}
+                  </span>
+                  <Badge
+                    variant={
+                      item.category === "Produtivo" ? "productive" : "unproductive"
+                    }
+                    className="text-xs shrink-0"
+                  >
+                    {item.category}
+                  </Badge>
+                </div>
+                <p className="text-sm font-medium text-foreground truncate" title={item.subject || "Sem assunto"}>
+                  {item.subject || "Sem assunto"}
+                </p>
+                <p className="text-sm font-medium text-foreground">{confidence}% confiança</p>
+              </div>
+            )
+          })}
         </div>
       </CardContent>
     </Card>
