@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -27,17 +27,46 @@ interface EmailUploadFormProps {
 export function EmailUploadForm({ onResult, isLoading, setIsLoading }: EmailUploadFormProps) {
   const [file, setFile] = useState<File | null>(null)
   const [fileSubject, setFileSubject] = useState("")
+  const isProcessingRef = useRef(false)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<TextFormData>({
     resolver: zodResolver(textFormSchema),
   })
 
+  /** Limpa todo o estado do formulário (texto, assunto, arquivo) após qualquer envio. */
+  const clearAllFormState = () => {
+    // Limpa explicitamente os valores dos campos
+    setValue("subject", "")
+    setValue("content", "")
+    // Reseta o formulário com valores vazios e limpa todos os estados
+    reset(
+      { subject: "", content: "" },
+      { 
+        keepErrors: false,
+        keepDirty: false,
+        keepIsSubmitted: false,
+        keepTouched: false,
+        keepIsValid: false,
+        keepSubmitCount: false
+      }
+    )
+    setFile(null)
+    setFileSubject("")
+  }
+
   const onSubmitText = async (data: TextFormData) => {
+    if (isProcessingRef.current || isLoading) {
+      toast.warning("Aguarde a classificação atual terminar antes de enviar outro email.")
+      return
+    }
+
+    isProcessingRef.current = true
     setIsLoading(true)
     try {
       const result = await emailService.classifyText({
@@ -46,29 +75,45 @@ export function EmailUploadForm({ onResult, isLoading, setIsLoading }: EmailUplo
       })
       onResult(result)
       toast.success("Email classificado com sucesso!")
-      reset()
-    } catch (error) {
+      clearAllFormState()
+    } catch (error: any) {
+      if (error?.message === "Requisição cancelada") {
+        return
+      }
+      console.error("Erro ao classificar email:", error)
       toast.error("Erro ao classificar o email. Tente novamente.")
     } finally {
       setIsLoading(false)
+      isProcessingRef.current = false
     }
   }
+  
   const onSubmitFile = async () => {
     if (!file) {
       toast.error("Por favor, selecione um arquivo.")
       return
     }
+    if (isProcessingRef.current || isLoading) {
+      toast.warning("Aguarde a classificação atual terminar antes de enviar outro email.")
+      return
+    }
+
+    isProcessingRef.current = true
     setIsLoading(true)
     try {
       const result = await emailService.classifyFile(file, fileSubject || undefined)
       onResult(result)
       toast.success("Arquivo processado com sucesso!")
-      setFile(null)
-      setFileSubject("")
-    } catch (error) {
+      clearAllFormState()
+    } catch (error: any) {
+      if (error?.message === "Requisição cancelada") {
+        return
+      }
+      console.error("Erro ao processar arquivo:", error)
       toast.error("Erro ao processar o arquivo. Verifique o formato e tente novamente.")
     } finally {
       setIsLoading(false)
+      isProcessingRef.current = false
     }
   }
 
@@ -80,7 +125,7 @@ export function EmailUploadForm({ onResult, isLoading, setIsLoading }: EmailUplo
           Enviar Email para Classificação
         </CardTitle>
         <CardDescription>
-          Cole o texto do email ou faça upload de um arquivo (.txt ou .pdf)
+          Cole o texto do email ou faça upload de um arquivo (.txt ou .pdf). A classificação vale para qualquer remetente.
         </CardDescription>
       </CardHeader>
       <CardContent>

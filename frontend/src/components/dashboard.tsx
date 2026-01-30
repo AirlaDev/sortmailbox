@@ -139,6 +139,8 @@ export function Dashboard({ onNavigate, sharedHistory = [], onHistoryUpdate }: D
       setSmartReply(result.suggested_response)
       updateHistory({ ...result, subject: emailSubject || undefined })
       toast.success("Email classificado com sucesso!")
+      setEmailContent("")
+      setEmailSubject("")
     } catch (error: any) {
       toast.error(error.response?.data?.detail || "Erro ao classificar email")
     } finally {

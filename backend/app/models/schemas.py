@@ -8,6 +8,7 @@ class ClassificationCategory(str, Enum):
     IMPRODUTIVO = "Improdutivo"
 
 class EmailInput(BaseModel):
+    """Entrada para classificação. Funciona para qualquer remetente: a classificação é feita apenas por assunto e conteúdo."""
     content: Optional[str] = Field(None, description="Conteúdo do email em texto")
     subject: Optional[str] = Field(None, description="Assunto do email")
     class Config:
