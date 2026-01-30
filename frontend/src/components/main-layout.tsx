@@ -18,7 +18,6 @@ export function MainLayout({ activeItem, onNavigate, children }: MainLayoutProps
 
   return (
     <div className="flex h-screen bg-background overflow-x-hidden">
-      {/* Backdrop móvel - só visível quando sidebar aberta */}
       <button
         type="button"
         aria-label="Fechar menu"
