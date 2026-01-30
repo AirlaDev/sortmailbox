@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { Sidebar } from "@/components/sidebar"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,87 +35,82 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar activeItem="dashboard" onNavigate={onNavigate} />
-      <main className="flex-1 ml-64 overflow-y-auto bg-background relative">
-        <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-background/95 pointer-events-none -z-10" />
-        <div className="container mx-auto p-6 flex items-center justify-center min-h-full">
-          <div className="w-full max-w-md">
-            <Button
-              variant="ghost"
-              onClick={() => onNavigate("dashboard")}
-              className="mb-6"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-            <Card className="bg-card/60 backdrop-blur-md border-border/30 shadow-lg">
-              <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl font-bold text-center">
-                  Entrar na sua conta
-                </CardTitle>
-                <CardDescription className="text-center">
-                  Faça login para acessar recursos adicionais (opcional)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Senha</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-3 pt-2">
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? "Entrando..." : "Entrar"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleSkip}
-                      className="w-full"
-                    >
-                      Continuar sem login
-                    </Button>
-                  </div>
-                </form>
-                <div className="mt-6 text-center">
-                  <p className="text-xs text-muted-foreground">
-                    O login é opcional. Você pode usar o SortMailBox sem criar uma conta.
-                  </p>
+    <div className="min-h-screen bg-background overflow-x-hidden relative">
+      <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-background/95 pointer-events-none -z-10" />
+      <div className="w-full max-w-md mx-auto px-4 py-6 sm:py-8 flex flex-col min-h-screen justify-center">
+        <Button
+          variant="ghost"
+          onClick={() => onNavigate("dashboard")}
+          className="mb-4 self-start"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        <Card className="bg-card/60 backdrop-blur-md border-border/30 shadow-lg w-full">
+          <CardHeader className="space-y-1 px-4 sm:px-6">
+            <CardTitle className="text-xl sm:text-2xl font-bold text-center">
+              Entrar na sua conta
+            </CardTitle>
+            <CardDescription className="text-center">
+              Com login: histórico na nuvem, preferências sincronizadas e relatórios exportáveis. Opcional.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-4 sm:px-6">
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </main>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 pt-2">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Entrando..." : "Entrar"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSkip}
+                  className="w-full"
+                >
+                  Continuar sem login
+                </Button>
+              </div>
+            </form>
+            <div className="mt-6 text-center">
+              <p className="text-xs text-muted-foreground">
+                O login é opcional. Você pode usar o SortMailBox sem criar uma conta.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

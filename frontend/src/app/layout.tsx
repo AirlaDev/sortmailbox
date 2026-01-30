@@ -1,22 +1,20 @@
-import { ReactNode, useEffect } from "react"
+import { ReactNode } from "react"
 import "./globals.css"
 import { Toaster } from "sonner"
 import { QueryProvider } from "@/components/providers/query-provider"
+import { SettingsProvider } from "@/components/providers/settings-provider"
 
 interface RootLayoutProps {
   children: ReactNode
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
-  useEffect(() => {
-    document.documentElement.classList.add('dark')
-    document.body.classList.add('dark')
-  }, [])
-
   return (
-    <QueryProvider>
-      {children}
-      <Toaster richColors position="top-right" />
-    </QueryProvider>
+    <SettingsProvider>
+      <QueryProvider>
+        {children}
+        <Toaster richColors position="top-right" />
+      </QueryProvider>
+    </SettingsProvider>
   )
 }

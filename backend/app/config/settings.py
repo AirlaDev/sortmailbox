@@ -1,10 +1,10 @@
 from pydantic_settings import BaseSettings
 from typing import List
-import os
 
 class Settings(BaseSettings):
     database_url: str = "postgresql://user:password@localhost:5432/autou_db"
     huggingface_api_key: str = ""
+    classification_model: str = "MoritzLaurer/bge-m3-zeroshot-v2.0"
     secret_key: str = "your-secret-key-change-in-production"
     environment: str = "development"
     debug: bool = True

@@ -1,12 +1,14 @@
-import { LayoutDashboard, History, Settings, Mail, User } from "lucide-react"
+import { LayoutDashboard, History, Settings, Mail, User, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
   activeItem?: "dashboard" | "history" | "settings"
   onNavigate?: (page: "dashboard" | "history" | "settings" | "login") => void
+  isOpen?: boolean
+  onClose?: () => void
 }
 
-export function Sidebar({ activeItem = "dashboard", onNavigate }: SidebarProps) {
+export function Sidebar({ activeItem = "dashboard", onNavigate, isOpen = false, onClose }: SidebarProps) {
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "history", label: "Histórico", icon: History },
@@ -14,13 +16,31 @@ export function Sidebar({ activeItem = "dashboard", onNavigate }: SidebarProps) 
   ]
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 border-r border-border bg-secondary z-40">
+    <aside
+      className={cn(
+        "fixed left-0 top-0 h-screen w-64 border-r border-border bg-secondary z-40 transition-transform duration-200 ease-out",
+        "md:translate-x-0",
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      )}
+    >
       <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600">
-            <Mail className="h-5 w-5 text-white" />
+        <div className="flex h-16 items-center justify-between gap-3 border-b border-border px-4 md:px-6">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600">
+              <Mail className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-foreground truncate">SortMailBox</span>
           </div>
-          <span className="text-xl font-bold text-foreground">SortMailBox</span>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex md:hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-muted transition-colors"
+              aria-label="Fechar menu"
+            >
+              <X className="h-5 w-5 text-foreground" />
+            </button>
+          )}
         </div>
         <nav className="flex-1 space-y-1 p-4">
           {navItems.map((item) => {
